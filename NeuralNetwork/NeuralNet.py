@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
+import random
 import NeuralNetwork.CustomMath as customMath
 
 
@@ -21,7 +22,7 @@ class RNN:
 
 class Regression:
 
-    def __init__(self, learning_rate=0.005):
+    def __init__(self, learning_rate=0.05):
         self.network = tf.keras.Sequential([
             tf.keras.layers.Dense(units=52, activation="relu", input_shape=(7,)),
             tf.keras.layers.Dense(units=78, activation="relu"),
@@ -29,13 +30,13 @@ class Regression:
             tf.keras.layers.Dense(units=28, activation="relu"),
             tf.keras.layers.Dense(units=10, activation="softmax")
         ])
-        self.network.compile(optimizer=tf.keras.optimizers.Adam(lr=learning_rate), loss='binary_crossentropy', metrics=['accuracy'])
+        self.network.compile(optimizer=tf.keras.optimizers.Adam(lr=learning_rate), loss='mse', metrics=['accuracy'])
         self.network.summary()
 
     def training(self, input_data: np.array, output_data: np.array):
         self.history = self.network.fit(
             input_data, output_data, epochs=50, batch_size=20, validation_split=0.25
-            #,callbacks=[tf.keras.callbacks.EarlyStopping(patience=3, monitor='val_loss')]
+            ,callbacks=[tf.keras.callbacks.EarlyStopping(patience=5, monitor='val_loss')]
         )
         self.network.save_weights("weights/value")
 
@@ -44,7 +45,11 @@ class Regression:
         result = self.network.predict(input_data)
         result = result.tolist()
         for i in range(len(result)):
-            print(result[i].index(max(result[i])))
+            if result[i].index(max(result[i])) == int(answer[i][0]):
+                correct = "correct!"
+            else:
+                correct = ""
+            print("predict: ", result[i].index(max(result[i])), "  answer: ", int(answer[i][0]), correct)
 
     def show_matching(self, test_data: np.asarray, answer: np.asarray):
         self.network.load_weights("weights/value")
@@ -72,12 +77,18 @@ def get_regression_data():
     csv_data.__next__()
     input_data = []
     output_data = []
+    all_data = []
 
     for line in csv_data:
-        input_data.append(
-            [float(line[1]), float(line[2]), float(line[3]), float(line[4]), float(line[5]), float(line[6]),
-             float(line[7])])
-        output_data.append([customMath.get_one_vector(float(line[8]))])
+        all_data.append(
+            [[float(line[1]), float(line[2]), float(line[3]), float(line[4]), float(line[5]), float(line[6]),
+             float(line[7])], [customMath.get_one_vector(float(line[8]))]])
+    random.shuffle(all_data)
+    for data in all_data:
+        input_data.append(data[0])
+        output_data.append(data[1])
+
+    print(all_data)
     input_data = np.asarray(input_data)
     output_data = np.asarray(output_data)
     print(input_data)
