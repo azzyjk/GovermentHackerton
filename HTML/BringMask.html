@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        /* 초기화 코드 + a */
+        *{ margin:0; padding:0; }
+        body{
+            font-family: 'Times New Roman', serif;
+            width:960px;
+            margin: 0px auto 0px auto;
+        }
+        li{list-style: none;}
+        a{text-decoration: none;}
+        img{border: 0;}
+
+        header{
+            background-color:grey;
+            height:200px;
+        }
+
+        #body{
+            position:relative;
+            background-color:white;
+            height:300px;
+        }
+        #body > #notifier{
+            position:absolute;
+            display:inline;
+            text-align:center;
+            font-family:'나눔고딕',sans-serif;
+            border:1px solid black;
+            top:50%; left:50%;
+        }
+
+        footer{
+            position:relative;
+            background-color:purple;
+            height:200px;
+        }
+
+        footer > #text{
+            float:right;
+            position:absolute;
+            top: 100px;
+            background-color: white;
+            width:200px; height:100px;
+            border:1px solid black;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+
+    </header>
+
+    <div id="body">
+        <div id="notifier">
+            미세먼지 수치가 높습니다. <br>
+            마스크를 착용하세요!
+        </div>
+
+
+    </div>
+
+    <footer>
+        <div id="text">
+            Developed by team APDO <br>
+            home IOT system
+        </div>
+    </footer>
+
+</body>
+</html>
