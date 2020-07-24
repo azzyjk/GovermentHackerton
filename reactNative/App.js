@@ -12,6 +12,7 @@ import { Notifications } from "expo";
 import NetInfo from "@react-native-community/netinfo";
 import Constants from "expo-constants";
 import * as Permissions from "expo-permissions";
+import Loading from "./Loading";
 
 async function _getiOSNotificationPermission() {
   const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
@@ -26,6 +27,7 @@ export default class App extends Component {
     this.state = {
       appState: AppState.currentState,
       test: "",
+      loading: false,
     };
   }
 
@@ -33,6 +35,7 @@ export default class App extends Component {
     NetInfo.fetch().then((state) => {
       this.setState({
         test: state.type,
+        loading: true,
       });
     });
   };
@@ -85,28 +88,41 @@ export default class App extends Component {
 
   componentDidMount() {
     _getiOSNotificationPermission();
-    this._getNetInfo();
+    setTimeout(() => {
+      this._getNetInfo();
+      // console.log("test!!!!!!!!!!!!");
+    }, 2000);
+
     this._listenForNotifications();
   }
 
   render() {
-    const { test } = this.state;
+    const { test, loading } = this.state;
     console.log("test는 ");
     console.log(test);
-    if (test == "wifi") {
-      return <Text style={{ marginTop: 30, padding: 20 }}>This is wifi.</Text>;
+
+    if (loading == false) {
+      return <Loading />;
     } else {
-      return (
-        <View style={styles.container}>
-          <Text style={{ marginTop: 30, padding: 20 }}>
-            NetInfo Example. Please open debugger to see the log
-          </Text>
-          <Button
-            title="Send a notification in 5 seconds!"
-            onPress={this._handleButtonPress}
-          />
-        </View>
-      );
+      if (test == "wifi") {
+        return (
+          <View style={styles.container}>
+            <Text style={styles.showData}>This is wifi.</Text>
+          </View>
+        );
+      } else {
+        return (
+          <View style={styles.container}>
+            <Text style={{ marginTop: 30, padding: 20 }}>
+              현재 밖이 아니시군요!
+            </Text>
+            <Button
+              title="Send a notification in 5 seconds!"
+              onPress={this._handleButtonPress}
+            />
+          </View>
+        );
+      }
     }
   }
 }
@@ -118,5 +134,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingTop: Constants.statusbarHeight,
     backgroundColor: "#ecf0f1",
+  },
+  showData: {
+    fontSize: 50,
+    // flex: 1,
+    // alignItems: "center",
+    // alignContent: "center",
+    // justifyContent: "center",
   },
 });
