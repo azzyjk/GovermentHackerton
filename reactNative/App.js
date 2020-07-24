@@ -33,22 +33,20 @@ export default class App extends Component {
       longitude: 0,
       latitude: 0,
       outside: false,
-      crtDustState: 1,
+      crtDustState: 0,
     };
   }
 
   _getCurrentDust = async () => {
-    console.log("test");
     const { data } = await axios.get(`http://192.168.35.169/postDB`);
-    console.log("Get current dust state");
-    console.log(data[0]["condition"]);
     this.setState({
-      crtDustState: data[0]["condition"],
+      crtDustState: 1, // data[0]["condition"] 0: good 1: bad
     });
   };
 
   _checkOutside = (distance, outside) => {
-    if (distance > 0 && outside == false) return true;
+    let moveDistance = 0; // 사용자가 이동한 거리
+    if (distance > moveDistance && outside == false) return true; // outside : true
   };
 
   _getGapBetweenTwoNumber = (num1, num2) => {
@@ -68,12 +66,14 @@ export default class App extends Component {
       if (lat != 0) {
         let gapLat = this._getGapBetweenTwoNumber(lat, latitude);
         let gapLon = this._getGapBetweenTwoNumber(lon, longitude);
-        // console.log(gapLat, gapLon);
-        // 사용자가 이동한 거리 계산해야됨
-        if (this._checkOutside(gapLat, outside)) {
-          // true로 변경해주어야함
-          // console.log("you are outside");
-          this._pushNotification();
+        gapLat = gapLat / 0.000008726;
+        gapLon = gapLon / 0.00001136364;
+        let distance = Math.sqrt(Math.pow(gapLat, 2) + Math.pow(gapLon, 2));
+        console.log(distance);
+        // 위도 기준 100m : 0.0008726
+        // 경도 기준 100m : 0.001136364
+        if ((distance, outside)) {
+          // this._pushNotification();
         }
       }
       this.setState({
@@ -152,26 +152,25 @@ export default class App extends Component {
   componentDidMount() {
     _getiOSNotificationPermission();
     this._getCurrentDust();
-    // setInterval(() => {
-    //   this._getLocation();
-    //   this._getNetInfo();
-    // }, 2000);
+    setInterval(() => {
+      this._getLocation();
+      this._getNetInfo();
+    }, 3000);
     this._listenForNotifications();
   }
 
   render() {
-    const { netType, loading } = this.state;
+    const { netType, loading, outside } = this.state;
     if (loading == false) {
       return <Loading />;
     } else {
-      if (netType == "wifi") {
+      if (!outside) {
         return (
           <View style={styles.container}>
             <Text style={styles.showData}>현재 밖이 아니시군요!</Text>
           </View>
         );
       } else {
-        console.log("test");
         return (
           <View style={styles.container}>
             <Text style={styles.showData}>지금 밖이시군요!</Text>
