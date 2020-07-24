@@ -13,12 +13,109 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended : true}));
 app.use(express.static(path.join(__dirname,'/public')));
 mysql.connect();
-app.post('/in',function(req,res){
+
+function changeState(){
+    
+
+                mysql.query('UPDATE state SET `st`= 0 WHERE `st` = 1',function(err,result){
+                    if(err) console.log(err);
+                    else{
+                    console.log('change'); 
+                    }
+                });
+
+    }
+
+//setInterval(changeState,120000);
+//api
+app.get('/postDB',function(req,res){
+    mysql.query('SELECT * FROM air order by `dateext` desc',function(err,result){
+      
+        if(err) console.log(err);
+        else{
+
+            var data =  [{
+                    value :  result[0].value,
+                    condition : parseInt((result[0].condition)/2)
+               }];
+            mysql.query('SELECT * FROM state',function(err,result){
+                if(err) console.log(err);
+                else{
+        
+                    var post = [{
+                        value : data[0].value,
+                        condition : data[0].condition,
+                        state : result[0].st,
+                        //0 = close, 1 = open
+                        isOpen : result[0].wst
+                    }];
+                    return res.json(post);
+                }
+            });
+            //console.log(data[0].value);
+            //console.log("condition :" + data[0].condition);
+
+        }
+    });
+});
+
+app.get('/window_open',function(req,res){
+    
+    mysql.query('UPDATE state SET `wst`= 1 WHERE `wst` = 0',function(err,result){
+                 if(err) console.log(err);
+                 else{
+                 console.log('open'); 
+             }
+    });
+
+});
+
+app.get('/window_close',function(req,res){
+
+    console.log('close');
+    mysql.query('UPDATE state SET `wst`= 0 WHERE `wst` = 1',function(err,result){
+                 if(err) console.log(err);
+                 else{
+                 console.log('close'); 
+             }
+    });
+
+});
+app.post('/toilet_success',function(req,res){
 
     console.log(req.body);
-})
+});
+
+app.post('/toilet_fail',function(req,res){
+
+    console.log(req.body);
+});
+
+app.post('/out',function(req,res){
+
+    //console.log(req.body);
+    console.log('get data from out');
+    // 0 == 평소, 1 == out
+    mysql.query('UPDATE state SET `st` = 1 WHERE `st` = 0',function(err,result){
+        if(err) console.log(err);
+        else{
+            
+        }
+    });
+    setTimeout(function(){
+        changeState();
+    },15000);
+    
+    return res.sendStatus(200);
+
+
+});
+
+
+
 app.get('/getData',function(req,res){
 
+   
     const xmlurl = 'http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=9tQYwzul4JBR2bdy3gCIJG8PBJFO45xaTR3OHxPiVWH4tJyGw2ypbc02yqWpWPqHzL2wYnIO820gNnJPUbgZUA%3D%3D&numOfRows=40&pageNo=1&sidoName=%EC%84%9C%EC%9A%B8&ver=1.3&'
     request.get(xmlurl,function(err,res,body){
         if(err) console.log(err);
@@ -46,7 +143,7 @@ app.get('/getData',function(req,res){
                 else if(pm10Value >= 16 && pm10Value <= 35) condition = 1;
                 else if(pm10Value >= 0 && pm10Value <= 15) condition = 0;
                 else condition = -1;
-                console.log(dateext,station,pm10Value,condition);
+                //console.log(dateext,station,pm10Value,condition);
 
                 mysql.query('SELECT dateext FROM air',function(err,result){
                     if(err) console.log(err);
@@ -69,16 +166,20 @@ app.get('/getData',function(req,res){
                                         console.log(error);
                                      }
                                         else{
+                                            
                                         }
 
                          });
+                        }
+                        else{
                         }
                         
                     }
                 });
         }
     }
-})
+    });
+    
 });
 
 //get data from form
@@ -92,8 +193,6 @@ app.post('/login',function(req,res){
 });
 
 
-
-//d ddddd
 //open server
 app.get('/',function(req,res){
     res.writeHead(200,{'Content-Type' : 'text/html'});
