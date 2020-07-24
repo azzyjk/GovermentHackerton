@@ -60,7 +60,8 @@ export default class App extends Component {
         // 사용자가 이동한 거리 계산해야됨
         if (this._checkOutside(gapLat, outside)) {
           // true로 변경해주어야함
-          console.log("you are outside");
+          // console.log("you are outside");
+          this._pushNotification();
         }
       }
       this.setState({
@@ -89,13 +90,14 @@ export default class App extends Component {
     });
   };
 
-  _handleButtonPress = () => {
+  _pushNotification = () => {
     const titles = ["오늘은 미세먼지가 나쁜 날이에요!"];
     const messages = [
-      "test111111111",
-      "test2222222222",
-      "test3333333333",
-      "test4444444444",
+      "호흡기가 아야해요~",
+      "마스크는 잘 착용하셨나요?",
+      "집에 빨리 돌아가는게 좋을 것 같아요!",
+      "미세먼지가 나쁜날엔 물을 많이 마셔야해요",
+      "손은 꼭 잘 씻어야 해요",
     ];
 
     const message = messages[Math.floor(Math.random() * messages.length)];
@@ -103,11 +105,11 @@ export default class App extends Component {
 
     // push notification의 설정 및 정보
     const localnotification = {
+      title: title,
       body: message,
       data: { title: title, message: message },
       android: {
         sound: true,
-        title: title,
       },
       ios: {
         sound: true,
