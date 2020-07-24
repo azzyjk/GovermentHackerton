@@ -1,7 +1,15 @@
 import React, { Component } from "react";
-import { View, StyleSheet, Button, Alert, Platform } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Button,
+  Alert,
+  Platform,
+  AppState,
+  Text,
+} from "react-native";
 import { Notifications } from "expo";
-// import * as Expo from "expo";
+import NetInfo from "@react-native-community/netinfo";
 import Constants from "expo-constants";
 import * as Permissions from "expo-permissions";
 
@@ -15,8 +23,19 @@ async function _getiOSNotificationPermission() {
 export default class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      appState: AppState.currentState,
+      test: "",
+    };
   }
+
+  _getNetInfo = () => {
+    NetInfo.fetch().then((state) => {
+      this.setState({
+        test: state.type,
+      });
+    });
+  };
 
   _handleButtonPress = () => {
     const titles = ["오늘은 미세먼지가 나쁜 날이에요!"];
@@ -66,18 +85,29 @@ export default class App extends Component {
 
   componentDidMount() {
     _getiOSNotificationPermission();
+    this._getNetInfo();
     this._listenForNotifications();
   }
 
   render() {
-    return (
-      <View style={styles.container}>
-        <Button
-          title="Send a notification in 5 seconds!"
-          onPress={this._handleButtonPress}
-        />
-      </View>
-    );
+    const { test } = this.state;
+    console.log("test는 ");
+    console.log(test);
+    if (test == "wifi") {
+      return <Text style={{ marginTop: 30, padding: 20 }}>This is wifi.</Text>;
+    } else {
+      return (
+        <View style={styles.container}>
+          <Text style={{ marginTop: 30, padding: 20 }}>
+            NetInfo Example. Please open debugger to see the log
+          </Text>
+          <Button
+            title="Send a notification in 5 seconds!"
+            onPress={this._handleButtonPress}
+          />
+        </View>
+      );
+    }
   }
 }
 
