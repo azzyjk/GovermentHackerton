@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import {
   View,
   StyleSheet,
-  Button,
   Alert,
   Platform,
   AppState,
@@ -29,92 +28,124 @@ export default class App extends Component {
     this.state = {
       appState: AppState.currentState,
       netType: "",
-      loading: true,
+      loading: false,
       longitude: 0,
       latitude: 0,
-      outside: false,
+      isOutside: false,
       crtDustState: 0,
+      windowIsOpen: 0,
+      isPushedWindowAlarm: 0,
+      isPushedDustAlarm: 0,
     };
   }
 
-  _getCurrentDust = async () => {
-    const { data } = await axios.get(`http://192.168.35.169/postDB`);
+  _getCurrentInfo = async () => {
+    const { data } = await axios.get(`http://211.176.118.59/postDB`);
+    this._getNetInfo();
     this.setState({
-      crtDustState: 1, // data[0]["condition"] 0: good 1: bad
+      crtDustState: data[0]["condition"], // 0: good 1: bad
+      windowIsOpen: data[0]["isOpen"],
     });
   };
 
-  _checkOutside = (distance, outside) => {
-    let moveDistance = 0; // 사용자가 이동한 거리
-    if (distance > moveDistance && outside == false) return true; // outside : true
+  _getDistance = (gapLat, gapLon) => {
+    let latMeter = 0.000008726; // 위도 기준 1m : 0.000008726
+    let lonMeter = 0.00001136364; // 경도 기준 1m : 0.00001136364
+
+    gapLat = gapLat / latMeter;
+    gapLon = gapLon / lonMeter;
+    return Math.sqrt(Math.pow(gapLat, 2) + Math.pow(gapLon, 2));
+  };
+
+  _checkOutside = (distance, netType) => {
+    let moveDistance = 0; // 사용자가 이동한 거리(얼마나 이동했을때 밖이라고 판단할지)
+    if (distance > moveDistance && netType != "wifi") {
+      // netType != "wifi"
+
+      this.setState({
+        isOutside: true,
+        loading: true,
+      });
+    }
   };
 
   _getGapBetweenTwoNumber = (num1, num2) => {
     return Math.abs(num1 - num2);
   };
 
-  _getLocation = async () => {
-    const { latitude, longitude, outside } = this.state;
-    let lat = latitude;
-    let lon = longitude;
+  _getFirstLocation = async () => {
     try {
       await Location.requestPermissionsAsync();
       const {
         coords: { latitude, longitude },
       } = await Location.getCurrentPositionAsync();
 
-      if (lat != 0) {
-        let gapLat = this._getGapBetweenTwoNumber(lat, latitude);
-        let gapLon = this._getGapBetweenTwoNumber(lon, longitude);
-        gapLat = gapLat / 0.000008726;
-        gapLon = gapLon / 0.00001136364;
-        let distance = Math.sqrt(Math.pow(gapLat, 2) + Math.pow(gapLon, 2));
-        console.log(distance);
-        // 위도 기준 100m : 0.0008726
-        // 경도 기준 100m : 0.001136364
-        if ((distance, outside)) {
-          // this._pushNotification();
-        }
-      }
+      this._getCurrentInfo();
+
       this.setState({
         latitude: latitude,
         longitude: longitude,
-        loading: true,
+      });
+    } catch (error) {}
+  };
+
+  _getLocation = async () => {
+    const { latitude, longitude, netType } = this.state;
+    let lat = latitude;
+    let lon = longitude;
+
+    try {
+      await Location.requestPermissionsAsync();
+      const {
+        coords: { latitude, longitude },
+      } = await Location.getCurrentPositionAsync();
+
+      let gapLat = this._getGapBetweenTwoNumber(lat, latitude);
+      let gapLon = this._getGapBetweenTwoNumber(lon, longitude);
+      let distance = this._getDistance(gapLat, gapLon);
+      this._checkOutside(distance, netType);
+
+      this.setState({
+        latitude: latitude,
+        longitude: longitude,
       });
     } catch (error) {}
   };
 
   _getNetInfo = () => {
-    let userNet = "";
     NetInfo.fetch().then((state) => {
-      userNet = state.type;
-      if (userNet == "wifi") {
-        this.setState({
-          outside: false,
-          netType: userNet,
-        });
-      } else {
-        this.setState({
-          outside: true,
-          netType: userNet,
-        });
-      }
+      this.setState({
+        netType: state.type,
+        // loading: true,
+      });
     });
   };
 
-  _pushNotification = () => {
+  _stateChangeWindowAlarm = () => {
+    this.setState({
+      isPushedWindowAlarm: 1,
+    });
+  };
+
+  _pushNotification = (notiType, delayTime) => {
     const titles = ["오늘은 미세먼지가 나쁜 날이에요!"];
-    const messages = [
-      "호흡기가 아야해요~",
-      "마스크는 잘 착용하셨나요?",
-      "집에 빨리 돌아가는게 좋을 것 같아요!",
-      "미세먼지가 나쁜날엔 물을 많이 마셔야해요",
-      "손은 꼭 잘 씻어야 해요",
-    ];
-
-    const message = messages[Math.floor(Math.random() * messages.length)];
+    const messages = {
+      dust: [
+        "호흡기가 아야해요~",
+        "마스크는 잘 착용하셨나요?",
+        "집에 빨리 돌아가는게 좋을 것 같아요!",
+        "외출을 자제하시는게 좋을 것 같아요!",
+        "손은 꼭 잘 씻어야 해요",
+      ],
+      water: ["물은 많이 드셨나요?", "물을 많이 마시면 미세먼지 완화에 좋아요"],
+      window: [
+        "미세먼지가 나쁜 날엔 창문을 닫는 것이 좋아요!",
+        "지금 창문이 열려있어서 미세먼지들이 들어오고 있어요!",
+      ],
+    };
+    const message =
+      messages[notiType][Math.floor(Math.random() * messages[notiType].length)];
     const title = titles[Math.floor(Math.random() * titles.length)];
-
     // push notification의 설정 및 정보
     const localnotification = {
       title: title,
@@ -129,10 +160,10 @@ export default class App extends Component {
     };
 
     // push notification을 보낼 시간
-    let sendAfterFiveSeconds = Date.now();
-    sendAfterFiveSeconds += 5 * 1000;
+    let sendAfterFewSeconds = Date.now();
+    sendAfterFewSeconds += delayTime * 1000;
 
-    const schedulingOptions = { time: sendAfterFiveSeconds };
+    const schedulingOptions = { time: sendAfterFewSeconds };
 
     // push notification 보내기
     Notifications.scheduleLocalNotificationAsync(
@@ -149,34 +180,73 @@ export default class App extends Component {
     });
   };
 
+  _windowPushNotification = () => {
+    const { windowIsOpen, isPushedWindowAlarm } = this.state;
+    if ((isPushedWindowAlarm == 0) & (windowIsOpen == 1)) {
+      this._pushNotification("window", 15);
+      this.setState({
+        isPushedWindowAlarm: 1,
+      });
+    }
+  };
+
+  _dustPushNotification = () => {
+    const { crtDustState, isPushedDustAlarm } = this.state;
+    if (crtDustState == 1 && isPushedDustAlarm == 0) {
+      this._pushNotification("dust", 1);
+      this._pushNotification("dust", 50);
+
+      this.setState({
+        isPushedDustAlarm: 1,
+      });
+      setTimeout(() => {
+        this.setState({
+          isPushedDustAlarm: 0,
+        });
+      }, 180 * 1000);
+    }
+  };
+
   componentDidMount() {
     _getiOSNotificationPermission();
-    this._getCurrentDust();
+
+    this._getFirstLocation();
+
     setInterval(() => {
       this._getLocation();
       this._getNetInfo();
-    }, 3000);
+      this._getCurrentInfo();
+    }, 3 * 1000);
+
+    setTimeout(() => {
+      setInterval(() => {
+        this._windowPushNotification();
+        this._dustPushNotification(1);
+      }, 3 * 1000);
+    }, 5 * 1000);
+
+    setInterval(() => {
+      this._pushNotification("water", 1);
+    }, 120 * 1000); //1800
+
     this._listenForNotifications();
   }
 
   render() {
-    const { netType, loading, outside } = this.state;
-    if (loading == false) {
-      return <Loading />;
+    const { loading, isOutside } = this.state;
+
+    if (isOutside) {
+      return (
+        <View style={styles.container}>
+          <Text style={styles.showData}>지금 밖이시군요!</Text>
+        </View>
+      );
     } else {
-      if (!outside) {
-        return (
-          <View style={styles.container}>
-            <Text style={styles.showData}>현재 밖이 아니시군요!</Text>
-          </View>
-        );
-      } else {
-        return (
-          <View style={styles.container}>
-            <Text style={styles.showData}>지금 밖이시군요!</Text>
-          </View>
-        );
-      }
+      return (
+        <View style={styles.container}>
+          <Text style={styles.showData}>현재 밖이 아니시군요!</Text>
+        </View>
+      );
     }
   }
 }
