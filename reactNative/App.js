@@ -13,6 +13,7 @@ import NetInfo from "@react-native-community/netinfo";
 import Constants from "expo-constants";
 import * as Permissions from "expo-permissions";
 import Loading from "./Loading";
+import * as Location from "expo-location";
 
 async function _getiOSNotificationPermission() {
   const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
@@ -26,16 +27,30 @@ export default class App extends Component {
     super(props);
     this.state = {
       appState: AppState.currentState,
-      test: "",
+      netType: "",
       loading: false,
+      longitude: 0,
+      latitude: 0,
     };
   }
+  _getLocation = async () => {
+    try {
+      await Location.requestPermissionsAsync();
+      const {
+        coords: { latitude, longitude },
+      } = await Location.getCurrentPositionAsync();
+      this.setState({
+        latitude: latitude,
+        longitude: longitude,
+        loading: true,
+      });
+    } catch (error) {}
+  };
 
   _getNetInfo = () => {
     NetInfo.fetch().then((state) => {
       this.setState({
-        test: state.type,
-        loading: true,
+        netType: state.type,
       });
     });
   };
@@ -54,11 +69,11 @@ export default class App extends Component {
 
     // push notification의 설정 및 정보
     const localnotification = {
-      title: title,
       body: message,
       data: { title: title, message: message },
       android: {
         sound: true,
+        title: title,
       },
       ios: {
         sound: true,
@@ -90,36 +105,27 @@ export default class App extends Component {
     _getiOSNotificationPermission();
     setTimeout(() => {
       this._getNetInfo();
-      // console.log("test!!!!!!!!!!!!");
+      this._getLocation();
     }, 2000);
-
     this._listenForNotifications();
   }
 
   render() {
-    const { test, loading } = this.state;
-    console.log("test는 ");
-    console.log(test);
-
+    const { netType, loading } = this.state;
     if (loading == false) {
       return <Loading />;
     } else {
-      if (test == "wifi") {
+      if (netType == "wifi") {
         return (
           <View style={styles.container}>
-            <Text style={styles.showData}>This is wifi.</Text>
+            <Text style={styles.showData}>현재 밖이 아니시군요!</Text>
           </View>
         );
       } else {
+        this._handleButtonPress();
         return (
           <View style={styles.container}>
-            <Text style={{ marginTop: 30, padding: 20 }}>
-              현재 밖이 아니시군요!
-            </Text>
-            <Button
-              title="Send a notification in 5 seconds!"
-              onPress={this._handleButtonPress}
-            />
+            <Text style={styles.showData}>지금 밖이시군요!</Text>
           </View>
         );
       }
