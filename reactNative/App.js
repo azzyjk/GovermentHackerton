@@ -1,47 +1,92 @@
-//This is an example code for Net Info//
 import React, { Component } from "react";
-//import react in our code.
+import { View, StyleSheet, Button, Alert, Platform } from "react-native";
+import { Notifications } from "expo";
+// import * as Expo from "expo";
+import Constants from "expo-constants";
+import * as Permissions from "expo-permissions";
 
-import NetInfo from "@react-native-community/netinfo";
-import { AppState, Text } from "react-native";
-
-export default class App extends Component {
-  state = {
-    appState: AppState.currentState,
-    test: "",
-  };
-  componentDidMount() {
-    //To get the network state once
-    NetInfo.fetch().then((state) => {
-      this.setState({
-        test: state.type,
-      });
-    });
-
-    //Subscribe to network state updates
-    // const unsubscribe = NetInfo.addEventListener((state) => {
-    //   console.log(
-    //     "Connection type: " +
-    //       state.type +
-    //       ", Is connected?: " +
-    //       state.isConnected
-    //   );
-    // });
-
-    //To Unsubscribe the network state update
-    //unsubscribe();
-  }
-  render() {
-    const { test } = this.state;
-    if (test == "wifi") {
-      console.log("wifi");
-      return <Text style={{ marginTop: 30, padding: 20 }}>This is wifi.</Text>;
-    } else {
-      return (
-        <Text style={{ marginTop: 30, padding: 20 }}>
-          NetInfo Example. Please open debugger to see the log
-        </Text>
-      );
-    }
+async function _getiOSNotificationPermission() {
+  const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+  if (status !== "granted") {
+    await Permissions.askAsync(Permissions.NOTIFICATIONS);
   }
 }
+
+export default class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
+  }
+
+  _handleButtonPress = () => {
+    const titles = ["오늘은 미세먼지가 나쁜 날이에요!"];
+    const messages = [
+      "test111111111",
+      "test2222222222",
+      "test3333333333",
+      "test4444444444",
+    ];
+
+    const message = messages[Math.floor(Math.random() * messages.length)];
+    const title = titles[Math.floor(Math.random() * titles.length)];
+
+    // push notification의 설정 및 정보
+    const localnotification = {
+      title: title,
+      body: message,
+      data: { title: title, message: message },
+      android: {
+        sound: true,
+      },
+      ios: {
+        sound: true,
+      },
+    };
+
+    // push notification을 보낼 시간
+    let sendAfterFiveSeconds = Date.now();
+    sendAfterFiveSeconds += 5 * 1000;
+
+    const schedulingOptions = { time: sendAfterFiveSeconds };
+
+    // push notification 보내기
+    Notifications.scheduleLocalNotificationAsync(
+      localnotification,
+      schedulingOptions
+    );
+  };
+
+  _listenForNotifications = () => {
+    Notifications.addListener((notification) => {
+      if (notification.origin === "received" && Platform.OS === "ios") {
+        Alert.alert(notification.data.title, notification.data.message);
+      }
+    });
+  };
+
+  componentDidMount() {
+    _getiOSNotificationPermission();
+    this._listenForNotifications();
+  }
+
+  render() {
+    return (
+      <View style={styles.container}>
+        <Button
+          title="Send a notification in 5 seconds!"
+          onPress={this._handleButtonPress}
+        />
+      </View>
+    );
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: Constants.statusbarHeight,
+    backgroundColor: "#ecf0f1",
+  },
+});
