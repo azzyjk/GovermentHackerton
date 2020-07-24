@@ -16,12 +16,7 @@ app.use(bodyParser.urlencoded({extended : true}));
 app.use(express.static(path.join(__dirname,'/public')));
 mysql.connect();
 
-child = exec('python test.py',function(err,result){
-    if(err) console.log(err);
-    else{
-        console.log(result);
-    }
-});
+
 function changeState(){
     
 
@@ -102,7 +97,7 @@ app.post('/toilet_success',function(req,res){
 
 app.post('/toilet_fail',function(req,res){
 
-    console.log('toilet_success');
+    console.log('toilet_fail');
 
     return res.sendStatus(200);
 });
