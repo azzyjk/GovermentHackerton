@@ -31,14 +31,38 @@ export default class App extends Component {
       loading: false,
       longitude: 0,
       latitude: 0,
+      outside: false,
     };
   }
+
+  _checkOutside = (distance, outside) => {
+    if (distance > 0 && outside == false) return true;
+  };
+
+  _getGapBetweenTwoNumber = (num1, num2) => {
+    return Math.abs(num1 - num2);
+  };
+
   _getLocation = async () => {
+    const { latitude, longitude, outside } = this.state;
+    let lat = latitude;
+    let lon = longitude;
     try {
       await Location.requestPermissionsAsync();
       const {
         coords: { latitude, longitude },
       } = await Location.getCurrentPositionAsync();
+
+      if (lat != 0) {
+        let gapLat = this._getGapBetweenTwoNumber(lat, latitude);
+        let gapLon = this._getGapBetweenTwoNumber(lon, longitude);
+        // console.log(gapLat, gapLon);
+        // 사용자가 이동한 거리 계산해야됨
+        if (this._checkOutside(gapLat, outside)) {
+          // true로 변경해주어야함
+          console.log("you are outside");
+        }
+      }
       this.setState({
         latitude: latitude,
         longitude: longitude,
@@ -48,10 +72,20 @@ export default class App extends Component {
   };
 
   _getNetInfo = () => {
+    let userNet = "";
     NetInfo.fetch().then((state) => {
-      this.setState({
-        netType: state.type,
-      });
+      userNet = state.type;
+      if (userNet == "wifi") {
+        this.setState({
+          outside: false,
+          netType: userNet,
+        });
+      } else {
+        this.setState({
+          outside: true,
+          netType: userNet,
+        });
+      }
     });
   };
 
@@ -103,9 +137,9 @@ export default class App extends Component {
 
   componentDidMount() {
     _getiOSNotificationPermission();
-    setTimeout(() => {
-      this._getNetInfo();
+    setInterval(() => {
       this._getLocation();
+      this._getNetInfo();
     }, 2000);
     this._listenForNotifications();
   }
