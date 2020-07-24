@@ -14,6 +14,7 @@ import Constants from "expo-constants";
 import * as Permissions from "expo-permissions";
 import Loading from "./Loading";
 import * as Location from "expo-location";
+import axios from "axios";
 
 async function _getiOSNotificationPermission() {
   const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
@@ -28,12 +29,23 @@ export default class App extends Component {
     this.state = {
       appState: AppState.currentState,
       netType: "",
-      loading: false,
+      loading: true,
       longitude: 0,
       latitude: 0,
       outside: false,
+      crtDustState: 1,
     };
   }
+
+  _getCurrentDust = async () => {
+    console.log("test");
+    const { data } = await axios.get(`http://192.168.35.169/postDB`);
+    console.log("Get current dust state");
+    console.log(data[0]["condition"]);
+    this.setState({
+      crtDustState: data[0]["condition"],
+    });
+  };
 
   _checkOutside = (distance, outside) => {
     if (distance > 0 && outside == false) return true;
@@ -139,10 +151,11 @@ export default class App extends Component {
 
   componentDidMount() {
     _getiOSNotificationPermission();
-    setInterval(() => {
-      this._getLocation();
-      this._getNetInfo();
-    }, 2000);
+    this._getCurrentDust();
+    // setInterval(() => {
+    //   this._getLocation();
+    //   this._getNetInfo();
+    // }, 2000);
     this._listenForNotifications();
   }
 
@@ -158,7 +171,7 @@ export default class App extends Component {
           </View>
         );
       } else {
-        this._handleButtonPress();
+        console.log("test");
         return (
           <View style={styles.container}>
             <Text style={styles.showData}>지금 밖이시군요!</Text>
