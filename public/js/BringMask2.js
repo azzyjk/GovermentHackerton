@@ -10,6 +10,7 @@ function update(){
         this.getState();
     },2000);
 
+    
     setInterval(function(){
         this.updateDB();
     },60000*20);
@@ -21,6 +22,7 @@ function updateDB(){
         type : 'GET',
         data : {'msg' : 'help'},
         success : function(){
+            console.log('update db');
         }
     });
 }

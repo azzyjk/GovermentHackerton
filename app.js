@@ -1,6 +1,6 @@
 var express = require('express');
 var app = express();
-
+var PythonShell = require('python-shell');
 var mysql = require('./db/mysql.js');
 var session = require('express-session');
 var fs = require('fs');
@@ -8,12 +8,20 @@ var bodyParser = require('body-parser');
 var path = require('path');
 var convert = require('xml-js');
 var request = require('request');
-
+var exec = require('child_process').exec;
+var sys = require('util');
+var child;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended : true}));
 app.use(express.static(path.join(__dirname,'/public')));
 mysql.connect();
 
+child = exec('python test.py',function(err,result){
+    if(err) console.log(err);
+    else{
+        console.log(result);
+    }
+});
 function changeState(){
     
 
@@ -26,7 +34,8 @@ function changeState(){
 
     }
 
-//setInterval(changeState,120000);
+setInterval(changeState,120000);
+
 //api
 app.get('/postDB',function(req,res){
     mysql.query('SELECT * FROM air order by `dateext` desc',function(err,result){
@@ -59,36 +68,43 @@ app.get('/postDB',function(req,res){
     });
 });
 
-app.get('/window_open',function(req,res){
+app.post('/window_open',function(req,res){
     
     mysql.query('UPDATE state SET `wst`= 1 WHERE `wst` = 0',function(err,result){
                  if(err) console.log(err);
                  else{
-                 console.log('open'); 
+                 console.log('open');
+
+                return res.sendStatus(200);
              }
     });
 
 });
 
-app.get('/window_close',function(req,res){
+app.post('/window_close',function(req,res){
 
-    console.log('close');
     mysql.query('UPDATE state SET `wst`= 0 WHERE `wst` = 1',function(err,result){
                  if(err) console.log(err);
                  else{
-                 console.log('close'); 
+                 console.log('close');
+
+                return res.sendStatus(200);
              }
     });
 
 });
 app.post('/toilet_success',function(req,res){
 
-    console.log(req.body);
+    console.log('toilet_success');
+
+    return res.sendStatus(200);
 });
 
 app.post('/toilet_fail',function(req,res){
 
-    console.log(req.body);
+    console.log('toilet_success');
+
+    return res.sendStatus(200);
 });
 
 app.post('/out',function(req,res){
