@@ -37,12 +37,12 @@ void loop() {
   float inner_duration = pulseIn(inner_echo, HIGH);
   float inner_distance = inner_duration / 58.8;
 
-  if(inner_distance < 10){
+  if(inner_distance < 100){
     if(inner_detected + outer_detected == 0){
       inner_detected = 1;
     }else if(outer_detected == 1){
       Serial.print("IN \n");
-      mySerial.write("IN");
+      mySerial.write(" IN");
       inner_detected = 0;
       outer_detected =0;
     }
@@ -54,12 +54,12 @@ void loop() {
   float outer_duration = pulseIn(outer_echo, HIGH);
   float outer_distance = outer_duration / 58.8;
 
-  if(outer_distance < 10){
+  if(outer_distance < 100){
     if(inner_detected + outer_detected == 0){
       outer_detected = 1;
     }else if(inner_detected == 1){
       Serial.print("OUT \n");
-      mySerial.write("OUT");
+      mySerial.write(" OUT");
       inner_detected = 0;
       outer_detected = 0;
     }
