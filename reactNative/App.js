@@ -224,7 +224,6 @@ export default class App extends Component {
         this._dustPushNotification(1);
       }, 3 * 1000);
     }, 5 * 1000);
-    this._pushNotification("water", 7);
 
     setInterval(() => {
       this._pushNotification("water", 1);
