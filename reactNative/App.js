@@ -193,7 +193,7 @@ export default class App extends Component {
   _dustPushNotification = () => {
     const { crtDustState, isPushedDustAlarm } = this.state;
     if (crtDustState == 1 && isPushedDustAlarm == 0) {
-      this._pushNotification("dust", 1);
+      this._pushNotification("dust", 10);
       this._pushNotification("dust", 50);
 
       this.setState({
@@ -224,10 +224,11 @@ export default class App extends Component {
         this._dustPushNotification(1);
       }, 3 * 1000);
     }, 5 * 1000);
+    this._pushNotification("water", 7);
 
     setInterval(() => {
       this._pushNotification("water", 1);
-    }, 120 * 1000); //1800
+    }, 1800 * 1000); //1800
 
     this._listenForNotifications();
   }
