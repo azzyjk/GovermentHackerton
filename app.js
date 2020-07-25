@@ -23,7 +23,7 @@ function changeState(){
                 mysql.query('UPDATE state SET `st`= 0 WHERE `st` = 1',function(err,result){
                     if(err) console.log(err);
                     else{
-                    console.log('change'); 
+                    //console.log('change'); 
                     }
                 });
 
@@ -68,7 +68,7 @@ app.post('/window_open',function(req,res){
     mysql.query('UPDATE state SET `wst`= 1 WHERE `wst` = 0',function(err,result){
                  if(err) console.log(err);
                  else{
-                 console.log('open');
+                 console.log(' window open');
 
                 return res.sendStatus(200);
              }
@@ -81,7 +81,7 @@ app.post('/window_close',function(req,res){
     mysql.query('UPDATE state SET `wst`= 0 WHERE `wst` = 1',function(err,result){
                  if(err) console.log(err);
                  else{
-                 console.log('close');
+                 console.log('window close');
 
                 return res.sendStatus(200);
              }
@@ -105,7 +105,7 @@ app.post('/toilet_fail',function(req,res){
 app.post('/out',function(req,res){
 
     //console.log(req.body);
-    console.log('get data from out');
+    console.log('out');
     // 0 == 평소, 1 == out
     mysql.query('UPDATE state SET `st` = 1 WHERE `st` = 0',function(err,result){
         if(err) console.log(err);
