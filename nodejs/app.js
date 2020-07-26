@@ -74,6 +74,7 @@ app.post('/window_open', function(req, res) {
 
 });
 
+ 
 app.post('/window_close', function(req, res) {
 
     mysql.query('UPDATE state SET `wst`= 0 WHERE `wst` = 1', function(err, result) {
