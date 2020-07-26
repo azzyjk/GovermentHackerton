@@ -1,29 +1,30 @@
 import bluetooth as bt
 import requests
 import datetime
-import paramiko
-from scp import SCPClient, SCPException
 import time
+import os
 
 socket = bt.BluetoothSocket(bt.RFCOMM)
-socket.connect(("98:D3:41:FD:66:2A", 1))
+socket.connect(("98:D3:21:F4:88:8A", 1))
 print("Connection established")
 
 while True:
-    front_message = socket.recv(1024)
-    print(front_message)
-    if format(front_message) == "b'IN'":
-        # send data to sub_server
-        ssh_client = paramiko.SSHClient()
-        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh_client.connect("192.168.35.40", username="pi", password="$y1K!Nv72")
+    try:
+        in_checker = open("/home/pi/python/in.txt")
+        cur_time = datetime.datetime.now()
+        while True:
+            toilet_message = socket.recv(1024)
+            time_elapse = datetime.datetime.now() - cur_time
+            if format(toilet_message) == "b'toilet'" and time_elapse.seconds < 50:
+                requests.post("http://192.168.35.169/toilet_success", data={"toilet_success":"true"})
+                print("toilet success")
+                break
+            elif format(toilet_message) != "b'toilet'" and time_elapse.seconds >= 50:
+                requests.post("http://192.168.35.169/toilet_fail", data={"toilet_fail":"true"})
+                print("toilet_fail")
+                break
+        os.system("rm -rf /home/pi/python/in.txt")
+        print("flag erased")
 
-        with SCPClient(ssh_client.get_transport()) as scp:
-            scp.put("/home/ht/python/in.txt", "~/python", preserve_times=True)
-        print("IN detected, pass to sub server")
-        ssh_client.close()
-        time.sleep(10)
-
-    elif format(front_message) == "b'OUT'":
-        requests.post("http://localhost/out", data={"out":"true"})
-        print("out send complete")
+    except FileNotFoundError:
+        time.sleep(1)

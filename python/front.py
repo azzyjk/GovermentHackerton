@@ -1,15 +1,28 @@
 import bluetooth as bt
 import requests
-import datetime
-from scp import SCPClient, SCPException
 import paramiko
+from scp import SCPClient
+import time
 
-t1 = datetime.datetime.now()
-t2 = datetime.datetime.now()
+socket = bt.BluetoothSocket(bt.RFCOMM)
+socket.connect(("98:D3:41:FD:66:2A", 1))
+print("Connection established")
 
-t3 = t2 - t1
-print(t1)
-print(t2)
-print(t3)
-print(t3.seconds)
+while True:
+    front_message = socket.recv(1024)
+    print(front_message)
+    if format(front_message) == "b'IN'":
+        # send data to sub_server
+        ssh_client = paramiko.SSHClient()
+        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh_client.connect("192.168.35.40", username="pi", password="$y1K!Nv72")
 
+        with SCPClient(ssh_client.get_transport()) as scp:
+            scp.put("/home/ht/python/in.txt", "~/python", preserve_times=True)
+        print("IN detected, pass to sub server")
+        ssh_client.close()
+        time.sleep(10)
+
+    elif format(front_message) == "b'OUT'":
+        requests.post("http://localhost/out", data={"out":"true"})
+        print("out send complete")
