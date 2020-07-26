@@ -2,6 +2,7 @@ $(updateDB);
 $(getState);
 $(update);
 
+
 var value = "";
 var condition = "";
 var text = "";
